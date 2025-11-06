@@ -63,10 +63,35 @@ $superheroes = [
   ], 
 ];
 
-?>
+// Sanitize incoming query (defense-in-depth with strip_tags + htmlspecialchars on output)
+$q = isset($_GET['query']) ? trim($_GET['query']) : '';
+$q = strip_tags($q);
 
-<ul>
-<?php foreach ($superheroes as $superhero): ?>
-  <li><?= $superhero['alias']; ?></li>
-<?php endforeach; ?>
-</ul>
+if ($q === '') {
+    // Return the original list of aliases
+    echo "<ul>\n";
+    foreach ($superheroes as $hero) {
+        echo "<li>" . htmlspecialchars($hero['alias'], ENT_QUOTES, 'UTF-8') . "</li>\n";
+    }
+    echo "</ul>";
+    exit;
+}
+
+// Case-insensitive exact match by NAME or ALIAS
+$found = null;
+foreach ($superheroes as $hero) {
+    if (strcasecmp($hero['name'], $q) === 0 || strcasecmp($hero['alias'], $q) === 0) {
+        $found = $hero;
+        break;
+    }
+}
+
+if ($found) {
+    echo '<div class="hero-card">';
+    echo "<h3>" . htmlspecialchars($found['alias'], ENT_QUOTES, 'UTF-8') . "</h3>\n";
+    echo "<h4>A.K.A " . htmlspecialchars($found['name'], ENT_QUOTES, 'UTF-8') . "</h4>\n";
+    echo "<p>" . htmlspecialchars($found['biography'], ENT_QUOTES, 'UTF-8') . "</p>\n";
+    echo "</div>";
+} else {
+    echo '<p class="not-found">SUPERHERO NOT FOUND</p>';
+}
